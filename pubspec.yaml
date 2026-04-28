@@ -1,0 +1,43 @@
+name: nutrilens
+description: "NutriLens – Deteksi Nutrisi Makanan via Kamera & AI"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Camera & Image
+  camera: ^0.11.0+2
+  image_picker: ^1.1.2
+  image: ^4.2.0
+
+  # TFLite inference
+  tflite_flutter: ^0.10.4
+
+  # Gemini AI
+  google_generative_ai: ^0.4.6
+
+  # State management
+  provider: ^6.1.2
+
+  # CSV parsing
+  csv: ^6.0.0
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Utilities
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  google_fonts: ^6.2.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/best_int8.tflite
+    - assets/nutrition.csv
