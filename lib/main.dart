@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'viewmodels/nutrilens_viewmodel.dart';
-import 'views/home_screen.dart';
+import 'viewmodels/settings_viewmodel.dart';
+import 'views/landing_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,16 +15,16 @@ class NutriLensApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => NutriLensViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => NutriLensViewModel()),
+        ChangeNotifierProvider(create: (_) => SettingsViewModel()),
+      ],
       child: MaterialApp(
-        title:           'NutriLens',
+        title: 'NutriLens',
         debugShowCheckedModeBanner: false,
-        theme:           AppTheme.dark,
-        initialRoute:    '/',
-        routes: {
-          '/': (_) => const HomeScreen(),
-        },
+        theme: AppTheme.dark,
+        home: const LandingScreen(),
       ),
     );
   }

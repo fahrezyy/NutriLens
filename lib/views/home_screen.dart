@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/nutrilens_viewmodel.dart';
+import '../viewmodels/settings_viewmodel.dart';
 import '../core/theme.dart';
 import 'result_screen.dart';
+import 'widgets/settings_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
     // Navigate to result when done
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (vm.state == AnalysisState.done && vm.result != null) {
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
           PageRouteBuilder(
             pageBuilder: (_, animation, __) => FadeTransition(
               opacity: animation,
@@ -69,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Header ────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
       child: Row(
         children: [
           Container(
@@ -96,6 +98,22 @@ class _HomeScreenState extends State<HomeScreen>
                   style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
+          const Spacer(),
+          // ── Settings button ──────────────────────────────────────────────
+          Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.2)),
+            ),
+            child: IconButton(
+              onPressed: () => SettingsSheet.show(context),
+              icon: const Icon(Icons.tune_rounded,
+                  color: AppTheme.primary, size: 22),
+              tooltip: 'Pengaturan',
+            ),
+          ),
         ],
       ),
     );
@@ -113,13 +131,15 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildIdleState() {
+    final settings = context.read<SettingsViewModel>();
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // Illustration
         Container(
-          width: 220,
-          height: 220,
+          width: 200,
+          height: 200,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
@@ -130,9 +150,9 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           child: Icon(Icons.fastfood_rounded,
-              size: 90, color: AppTheme.primary.withValues(alpha: 0.7)),
+              size: 80, color: AppTheme.primary.withValues(alpha: 0.7)),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
         Text(
           'Foto Makananmu',
           style: Theme.of(context).textTheme.displayMedium,
@@ -142,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            'Arahkan kamera ke piringmu dan\nkami akan menghitung nutrisinya untukmu 🍽️',
+            'Arahkan kamera ke piringmu atau pilih\nfoto dari galeri untuk menghitung nutrisinya 🍽️',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 15,
                   height: 1.6,
@@ -150,16 +170,36 @@ class _HomeScreenState extends State<HomeScreen>
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 40),
+
         // Camera button
-        _CameraButton(pulseAnim: _pulseAnim),
-        const SizedBox(height: 16),
+        _CameraButton(
+          pulseAnim: _pulseAnim,
+          onTap: () {
+            context.read<NutriLensViewModel>().captureAndAnalyze(
+              confidenceThreshold: settings.confidenceThreshold,
+              overlapThreshold:    settings.overlapThreshold,
+            );
+          },
+        ),
+        const SizedBox(height: 14),
         Text(
           'Ketuk untuk membuka kamera',
           style: Theme.of(context)
               .textTheme
               .bodyMedium
               ?.copyWith(fontSize: 13),
+        ),
+        const SizedBox(height: 24),
+
+        // ── Gallery button ────────────────────────────────────────────────
+        _GalleryButton(
+          onTap: () {
+            context.read<NutriLensViewModel>().pickFromGalleryAndAnalyze(
+              confidenceThreshold: settings.confidenceThreshold,
+              overlapThreshold:    settings.overlapThreshold,
+            );
+          },
         ),
       ],
     );
@@ -272,17 +312,18 @@ class _HomeScreenState extends State<HomeScreen>
 // ── Camera Button Widget ──────────────────────────────────────────────────
 class _CameraButton extends StatelessWidget {
   final Animation<double> pulseAnim;
-  const _CameraButton({required this.pulseAnim});
+  final VoidCallback      onTap;
+  const _CameraButton({required this.pulseAnim, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return ScaleTransition(
       scale: pulseAnim,
       child: GestureDetector(
-        onTap: () => context.read<NutriLensViewModel>().captureAndAnalyze(),
+        onTap: onTap,
         child: Container(
-          width: 96,
-          height: 96,
+          width: 88,
+          height: 88,
           decoration: BoxDecoration(
             shape:     BoxShape.circle,
             gradient:  const LinearGradient(
@@ -299,7 +340,44 @@ class _CameraButton extends StatelessWidget {
             ],
           ),
           child: const Icon(Icons.camera_alt_rounded,
-              color: AppTheme.surface, size: 40),
+              color: AppTheme.surface, size: 36),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Gallery Button Widget ─────────────────────────────────────────────────
+class _GalleryButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _GalleryButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.photo_library_rounded,
+                color: AppTheme.primary.withValues(alpha: 0.9), size: 20),
+            const SizedBox(width: 10),
+            const Text(
+              'Pilih dari Galeri',
+              style: TextStyle(
+                color:      AppTheme.primary,
+                fontWeight: FontWeight.w600,
+                fontSize:   14,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -7,11 +7,13 @@ import '../../core/theme.dart';
 class BoundingBoxOverlay extends StatelessWidget {
   final File                  imageFile;
   final List<DetectionResult> detections;
+  final double                boxOpacity;
 
   const BoundingBoxOverlay({
     super.key,
     required this.imageFile,
     required this.detections,
+    this.boxOpacity = 1.0,
   });
 
   @override
@@ -40,6 +42,7 @@ class BoundingBoxOverlay extends StatelessWidget {
             painter: _BoxPainter(
               detections: detections,
               size:       constraints.biggest,
+              boxOpacity: boxOpacity,
             ),
           ),
         ),
@@ -51,8 +54,13 @@ class BoundingBoxOverlay extends StatelessWidget {
 class _BoxPainter extends CustomPainter {
   final List<DetectionResult> detections;
   final Size                  size;
+  final double                boxOpacity;
 
-  _BoxPainter({required this.detections, required this.size});
+  _BoxPainter({
+    required this.detections,
+    required this.size,
+    this.boxOpacity = 1.0,
+  });
 
   static final _colors = [
     AppTheme.primary,
@@ -67,13 +75,22 @@ class _BoxPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (int i = 0; i < detections.length; i++) {
       final d     = detections[i];
-      final color = _colors[i % _colors.length];
+      final color = _colors[i % _colors.length].withValues(alpha: boxOpacity);
 
       final rect = Rect.fromLTWH(
         d.rect.left   * size.width,
         d.rect.top    * size.height,
         d.rect.width  * size.width,
         d.rect.height * size.height,
+      );
+
+      // Semi-transparent fill
+      final fillPaint = Paint()
+        ..color = color.withValues(alpha: 0.15 * boxOpacity)
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+        fillPaint,
       );
 
       // Box border
@@ -92,7 +109,7 @@ class _BoxPainter extends CustomPainter {
         text: TextSpan(
           text:  label,
           style: TextStyle(
-              color:      Colors.black,
+              color:      Colors.black.withValues(alpha: boxOpacity),
               fontSize:   11,
               fontWeight: FontWeight.w700,
               background: Paint()..color = color),
@@ -112,5 +129,7 @@ class _BoxPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BoxPainter old) =>
-      old.detections != detections || old.size != size;
+      old.detections != detections ||
+      old.size != size ||
+      old.boxOpacity != boxOpacity;
 }

@@ -38,18 +38,47 @@ class NutriLensViewModel extends ChangeNotifier {
   // ── Public API ────────────────────────────────────────────────────────────
 
   /// Opens the camera and runs the full analysis pipeline.
-  Future<void> captureAndAnalyze() async {
+  Future<void> captureAndAnalyze({
+    required double confidenceThreshold,
+    required double overlapThreshold,
+  }) async {
     final XFile? picked = await _picker.pickImage(
       source:       ImageSource.camera,
       imageQuality: 90,
     );
     if (picked == null) return; // user cancelled
 
-    await analyzePhoto(File(picked.path));
+    await analyzePhoto(
+      File(picked.path),
+      confidenceThreshold: confidenceThreshold,
+      overlapThreshold:    overlapThreshold,
+    );
+  }
+
+  /// Opens gallery and runs the analysis pipeline.
+  Future<void> pickFromGalleryAndAnalyze({
+    required double confidenceThreshold,
+    required double overlapThreshold,
+  }) async {
+    final XFile? picked = await _picker.pickImage(
+      source:       ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (picked == null) return; // user cancelled
+
+    await analyzePhoto(
+      File(picked.path),
+      confidenceThreshold: confidenceThreshold,
+      overlapThreshold:    overlapThreshold,
+    );
   }
 
   /// Accepts an existing [imageFile] and runs the pipeline.
-  Future<void> analyzePhoto(File imageFile) async {
+  Future<void> analyzePhoto(
+    File imageFile, {
+    required double confidenceThreshold,
+    required double overlapThreshold,
+  }) async {
     _capturedImage = imageFile;
     _result        = null;
     _errorMessage  = null;
@@ -57,7 +86,11 @@ class NutriLensViewModel extends ChangeNotifier {
 
     try {
       // ── Step 1: YOLO detection ──────────────────────────────────────────
-      final detections = await _detectionRepo.detect(imageFile);
+      final detections = await _detectionRepo.detect(
+        imageFile,
+        confidenceThreshold: confidenceThreshold,
+        iouThreshold:        overlapThreshold,
+      );
 
       if (detections.isEmpty) {
         _setState(AnalysisState.done, '');

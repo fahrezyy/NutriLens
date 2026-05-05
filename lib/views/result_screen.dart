@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/nutrilens_viewmodel.dart';
+import '../viewmodels/settings_viewmodel.dart';
 import '../core/theme.dart';
 import 'widgets/bounding_box_overlay.dart';
 import 'widgets/nutrient_card.dart';
@@ -10,8 +11,9 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<NutriLensViewModel>();
-    final result = vm.result!;
+    final vm       = context.watch<NutriLensViewModel>();
+    final settings = context.watch<SettingsViewModel>();
+    final result   = vm.result!;
 
     return Scaffold(
       body: CustomScrollView(
@@ -24,7 +26,7 @@ class ResultScreen extends StatelessWidget {
             leading: IconButton(
               onPressed: () {
                 vm.reset();
-                Navigator.of(context).pushReplacementNamed('/');
+                Navigator.of(context).pop();
               },
               icon: const Icon(Icons.arrow_back_ios_new_rounded),
             ),
@@ -32,7 +34,7 @@ class ResultScreen extends StatelessWidget {
               IconButton(
                 onPressed: () {
                   vm.reset();
-                  Navigator.of(context).pushReplacementNamed('/');
+                  Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.camera_alt_rounded,
                     color: AppTheme.primary),
@@ -44,6 +46,7 @@ class ResultScreen extends StatelessWidget {
                   ? BoundingBoxOverlay(
                       imageFile:  vm.capturedImage!,
                       detections: result.detections,
+                      boxOpacity: settings.opacityThreshold,
                     )
                   : const SizedBox(),
             ),

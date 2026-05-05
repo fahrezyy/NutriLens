@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
-import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 import '../../core/constants.dart';
@@ -25,7 +24,14 @@ class DetectionRepository {
   }
 
   /// Runs YOLO inference on [imageFile] and returns filtered detections.
-  Future<List<DetectionResult>> detect(File imageFile) async {
+  ///
+  /// [confidenceThreshold] and [iouThreshold] are user-configurable values
+  /// passed from the SettingsViewModel.
+  Future<List<DetectionResult>> detect(
+    File imageFile, {
+    required double confidenceThreshold,
+    required double iouThreshold,
+  }) async {
     await loadModel();
     final interpreter = _interpreter!;
 
@@ -126,7 +132,7 @@ class DetectionRepository {
       }
 
       final maxScore = classScores.reduce(max);
-      if (maxScore < AppConstants.CONF_THRESHOLD) continue;
+      if (maxScore < confidenceThreshold) continue;
 
       final classIdx = classScores.indexOf(maxScore);
       final label    = classIdx < AppConstants.LABELS.length
@@ -148,7 +154,7 @@ class DetectionRepository {
     }
 
     // ── Non-Maximum Suppression ──────────────────────────────────────────────
-    return _nms(detections, AppConstants.IOU_THRESHOLD);
+    return _nms(detections, iouThreshold);
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
