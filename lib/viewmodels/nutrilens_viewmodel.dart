@@ -41,6 +41,7 @@ class NutriLensViewModel extends ChangeNotifier {
   Future<void> captureAndAnalyze({
     required double confidenceThreshold,
     required double overlapThreshold,
+    required String geminiApiKey,
   }) async {
     final XFile? picked = await _picker.pickImage(
       source:       ImageSource.camera,
@@ -52,6 +53,7 @@ class NutriLensViewModel extends ChangeNotifier {
       File(picked.path),
       confidenceThreshold: confidenceThreshold,
       overlapThreshold:    overlapThreshold,
+      geminiApiKey:        geminiApiKey,
     );
   }
 
@@ -59,6 +61,7 @@ class NutriLensViewModel extends ChangeNotifier {
   Future<void> pickFromGalleryAndAnalyze({
     required double confidenceThreshold,
     required double overlapThreshold,
+    required String geminiApiKey,
   }) async {
     final XFile? picked = await _picker.pickImage(
       source:       ImageSource.gallery,
@@ -70,6 +73,7 @@ class NutriLensViewModel extends ChangeNotifier {
       File(picked.path),
       confidenceThreshold: confidenceThreshold,
       overlapThreshold:    overlapThreshold,
+      geminiApiKey:        geminiApiKey,
     );
   }
 
@@ -78,6 +82,7 @@ class NutriLensViewModel extends ChangeNotifier {
     File imageFile, {
     required double confidenceThreshold,
     required double overlapThreshold,
+    required String geminiApiKey,
   }) async {
     _capturedImage = imageFile;
     _result        = null;
@@ -119,21 +124,24 @@ class NutriLensViewModel extends ChangeNotifier {
       // ── Step 3: Lookup nutrition CSV ────────────────────────────────────
       final totals = await _nutritionRepo.computeTotals(foodCounts);
 
-      _setState(AnalysisState.generatingAdvice, '🤖 Meminta saran dari AI…');
-
       // ── Step 4: Build menu list with multipliers ─────────────────────────
       final menuList = foodCounts.entries
           .map((e) => e.value > 1 ? '${e.key} (×${e.value})' : e.key)
           .toList();
 
-      // ── Step 5: Gemini API ───────────────────────────────────────────────
-      final geminiText = await _geminiRepo.generateNutritionAdvice(
-        menuList: menuList,
-        calories: totals.totalCalories,
-        protein:  totals.totalProtein,
-        fat:      totals.totalFat,
-        carbs:    totals.totalCarbs,
-      );
+      // ── Step 5: Gemini API (skip if no API key) ──────────────────────────
+      String geminiText = '';
+      if (geminiApiKey.trim().isNotEmpty) {
+        _setState(AnalysisState.generatingAdvice, '🤖 Meminta saran dari AI…');
+        geminiText = await _geminiRepo.generateNutritionAdvice(
+          apiKey:   geminiApiKey,
+          menuList: menuList,
+          calories: totals.totalCalories,
+          protein:  totals.totalProtein,
+          fat:      totals.totalFat,
+          carbs:    totals.totalCarbs,
+        );
+      }
 
       // ── Step 6: Assemble result ──────────────────────────────────────────
       _result = NutritionSummary(

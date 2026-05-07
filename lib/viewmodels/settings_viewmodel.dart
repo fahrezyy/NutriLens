@@ -26,11 +26,21 @@ class SettingsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Gemini API Key (default empty → AI explanation disabled) ──────────────
+  String _geminiApiKey = '';
+  String get geminiApiKey => _geminiApiKey;
+  bool   get hasGeminiKey => _geminiApiKey.trim().isNotEmpty;
+  set geminiApiKey(String v) {
+    _geminiApiKey = v;
+    notifyListeners();
+  }
+
   /// Reset all settings to defaults.
   void resetDefaults() {
     _confidenceThreshold = 0.50;
     _overlapThreshold    = 0.0;
     _opacityThreshold    = 0.50;
+    _geminiApiKey        = '';
     notifyListeners();
   }
 }

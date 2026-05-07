@@ -38,5 +38,5 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/best_int8.tflite
+    - assets/best_float32.tflite
     - assets/nutrition.csv

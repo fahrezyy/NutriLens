@@ -179,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen>
             context.read<NutriLensViewModel>().captureAndAnalyze(
               confidenceThreshold: settings.confidenceThreshold,
               overlapThreshold:    settings.overlapThreshold,
+              geminiApiKey:        settings.geminiApiKey,
             );
           },
         ),
@@ -198,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen>
             context.read<NutriLensViewModel>().pickFromGalleryAndAnalyze(
               confidenceThreshold: settings.confidenceThreshold,
               overlapThreshold:    settings.overlapThreshold,
+              geminiApiKey:        settings.geminiApiKey,
             );
           },
         ),

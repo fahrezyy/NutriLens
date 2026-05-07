@@ -127,11 +127,13 @@ class ResultScreen extends StatelessWidget {
                   const SizedBox(height: 28),
                 ],
 
-                // Gemini advice
-                _SectionTitle(title: 'Saran AI Gizi',
-                    icon: Icons.psychology_rounded),
-                const SizedBox(height: 12),
-                _GeminiCard(text: result.geminiAnalysis),
+                // Gemini advice (only shown when API key is set)
+                if (result.geminiAnalysis.isNotEmpty) ...[
+                  _SectionTitle(title: 'Saran AI Gizi',
+                      icon: Icons.psychology_rounded),
+                  const SizedBox(height: 12),
+                  _GeminiCard(text: result.geminiAnalysis),
+                ],
               ]),
             ),
           ),
